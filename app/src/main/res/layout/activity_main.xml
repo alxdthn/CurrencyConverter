@@ -16,12 +16,13 @@
 		android:layout_height="wrap_content"
 		android:orientation="horizontal">
 		<Spinner
-			android:id="@+id/from"
+			android:id="@+id/spinnerFrom"
 			android:layout_width="0dp"
 			android:layout_weight="50"
 			android:layout_height="wrap_content">
 		</Spinner>
 		<EditText
+			android:id="@+id/inputValue"
 			android:layout_width="0dp"
 			android:layout_weight="50"
 			android:layout_height="wrap_content">
@@ -35,10 +36,16 @@
 	</TextView>
 
 	<Spinner
-		android:id="@+id/to"
+		android:id="@+id/spinnerTo"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content">
 	</Spinner>
+
+	<TextView
+		android:id="@+id/outputValue"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content">
+	</TextView>
 
 	<Button
 		android:id="@+id/convert"
