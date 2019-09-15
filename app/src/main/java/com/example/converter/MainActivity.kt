@@ -1,8 +1,5 @@
 package com.example.converter
 
-import android.content.Context
-import android.net.ConnectivityManager
-import android.net.NetworkInfo
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -12,7 +9,6 @@ import com.example.converter.data.CurrencyEntity
 import com.example.converter.data.DateEntity
 import com.example.converter.network.ConnectionDetector
 import com.example.converter.network.CurrencyApi
-import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.NonCancellable.cancel
 import org.xmlpull.v1.XmlPullParser
@@ -21,20 +17,24 @@ import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
-	private val KEY_IS_AFTER_ROTATE = "1"
-	var isAfterRotate : Int = 0
-	lateinit var spinnerFrom : Spinner
-	lateinit var spinnerTo : Spinner
-	lateinit var inputFrom : EditText
-	lateinit var inputTo : EditText
-	lateinit var updateInfo : TextView
-	lateinit var db : AppDatabase
-	lateinit var cd : ConnectionDetector
-	private lateinit var currencyApi : CurrencyApi
-	private val apiKey = "29a87a3d627ec05c965a"
-	private val currencies = arrayOf("EUR", "USD", "RUB", "GBP", "ALL", "XCD", "BBD", "BTN", "BND", "XAF", "CUP")
-	var currencyRate : Double? = null
-	var onChange = true
+	private lateinit var	updateInfo : TextView	//Поле вывода информации о последнем обновлении
+	private lateinit var	spinnerFrom : Spinner	//Спиннер выбора "из"
+	private lateinit var	spinnerTo : Spinner		//Спиннер выбора "в"
+	lateinit var			inputFrom : EditText	//Поле ввода "из"
+	lateinit var			inputTo : EditText		//Поле ввода "в"
+
+	lateinit var			db : AppDatabase		//База данных (Room)
+	lateinit var			cd : ConnectionDetector	//Детектор интернет соединения
+
+	private lateinit var	currencyApi : CurrencyApi			//API сервис
+	private val				KEY_IS_AFTER_ROTATE = "1" 			//Ключ хранения информации о повороте экрана
+	private val				API_KEY = "29a87a3d627ec05c965a"
+
+	var 					isAfterRotate : Int = 0			//Информация о повороте экрана
+	var						onChange = true					//Флаг проверки повторного изменения поля ввода
+	var						currencyRate : Double? = null	//Текущий для конвертации курс
+	private val				currencies = arrayOf(
+		"EUR", "USD", "RUB", "GBP", "ALL", "XCD", "BBD", "BTN", "BND", "XAF", "CUP")
 
 	private fun initSpinner(values: Array<String>) : ArrayAdapter<String> {
 		val spinnerAdapter = ArrayAdapter(this, R.layout.spinner_item, values)
@@ -56,12 +56,9 @@ class MainActivity : AppCompatActivity() {
 		val currentTime = Calendar.getInstance().timeInMillis
 		val check = currentTime - fromDb.date
 
-		Log.d("bestTAG", "checking currency rate:")
 		if (check >= 3600000) {
-			Log.d("bestTAG", "expire: ${check / 60000} minutes after update")
 			return true
 		}
-		Log.d("bestTAG", "normal: ${check / 60000} minutes after update")
 		return false
 	}
 
@@ -127,16 +124,13 @@ class MainActivity : AppCompatActivity() {
 		val from = spinnerFrom.selectedItem.toString()
 		val to = spinnerTo.selectedItem.toString()
 
-		Log.d("bestTAG", "from $from, to $to")
 		if (from == to) {
-			Log.d("bestTAG", "currencies equals, return 1.0")
 			currencyRate = 1.0
 			return
 		}
 		val query = from + "_" + to
 		val currency : CurrencyEntity? = db.make().getCurrency(query)
 		currencyRate = currency?.value
-		Log.d("bestTAG", "currency from db: $currencyRate, ${currency?.type}")
 	}
 
 	private fun updateFromApi() {
@@ -144,15 +138,13 @@ class MainActivity : AppCompatActivity() {
 		val currentDate = Calendar.getInstance().timeInMillis
 
 		db.make().insertDate(DateEntity(1, currentDate))
-		CoroutineScope(Dispatchers.IO).async {
+		CoroutineScope(Dispatchers.IO).launch {
 			for (query in queries) {
-				val response = currencyApi.getCurrencies(query, "ultra", apiKey)
+				val response = currencyApi.getCurrencies(query, "ultra", API_KEY)
 				val data = response.body()
 				if (response.isSuccessful && data != null) {
-					Log.d("bestTAG", "response is successful!")
 					for (value in data) {
 						db.make().insertCurrency(CurrencyEntity(value.key, value.value))
-						Log.d("bestTAG", "${value.key} ${value.value}")
 					}
 				}
 			}
@@ -162,6 +154,7 @@ class MainActivity : AppCompatActivity() {
 	private fun updateFromXml() {
 		val parser = resources.getXml(R.xml.custom_currencies)
 		val dateParser = resources.getXml(R.xml.custom_date)
+
 		while (parser.eventType != XmlPullParser.END_DOCUMENT) {
 			if (parser.eventType == XmlPullParser.START_TAG
 				&& parser.name == "currency") {
@@ -176,7 +169,6 @@ class MainActivity : AppCompatActivity() {
 			if (dateParser.eventType == XmlPullParser.START_TAG
 				&& dateParser.name == "date") {
 				val date = dateParser.getAttributeValue(0)
-				Log.d("bestTAG", date.substring(0, date.length - 1))
 				db.make().insertDate(DateEntity(1, date.substring(0, date.length - 1).toLong()))
 			}
 			dateParser.next()
@@ -190,7 +182,6 @@ class MainActivity : AppCompatActivity() {
 		else if (db.make().getDate() == null) {
 			updateFromXml()
 		}
-		updateInfo.text = "Последнее обновление: " + millisToDate(db.make().getDate().date)
 	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
@@ -222,6 +213,7 @@ class MainActivity : AppCompatActivity() {
 		if (needUpdateCurrencies()) {
 			updateCurrencies()
 		}
+		updateInfo.text = "Последнее обновление: " + millisToDate(db.make().getDate().date)
 	}
 
 	override fun onSaveInstanceState(outState: Bundle) {
