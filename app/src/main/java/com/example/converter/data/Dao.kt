@@ -16,4 +16,10 @@ interface AppDao {
 
 	@Query("SELECT * FROM CurrencyEntity")
 	fun getAllCurrencies(): MutableList<CurrencyEntity>
+
+	@Insert(onConflict = OnConflictStrategy.REPLACE)
+	fun insertDate(dateEntity: DateEntity)
+
+	@Query("SELECT * FROM DateEntity")
+	fun getDate(): DateEntity
 }

@@ -10,9 +10,9 @@ interface CurrencyApi {
 
     @GET("convert")
     suspend fun getCurrencies(
-        @Query("q") query: String,
+        @Query("q", encoded = true) query: String,
         @Query("compact") compact: String,
-        @Query("apiKey") key: String): Response<Map<String, String>>
+        @Query("apiKey") key: String): Response<Map<String, Double>>
 
     companion object {
 		private const val BASE_URL = "https://free.currconv.com/api/v7/"

@@ -9,25 +9,30 @@ import android.util.Log
 import android.widget.*
 import com.example.converter.data.AppDatabase
 import com.example.converter.data.CurrencyEntity
+import com.example.converter.data.DateEntity
 import com.example.converter.network.ConnectionDetector
 import com.example.converter.network.CurrencyApi
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.NonCancellable.cancel
+import org.xmlpull.v1.XmlPullParser
+import java.text.SimpleDateFormat
 import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
-
+	private val KEY_IS_AFTER_ROTATE = "1"
+	var isAfterRotate : Int = 0
 	lateinit var spinnerFrom : Spinner
 	lateinit var spinnerTo : Spinner
 	lateinit var inputFrom : EditText
 	lateinit var inputTo : EditText
+	lateinit var updateInfo : TextView
 	lateinit var db : AppDatabase
 	lateinit var cd : ConnectionDetector
 	private lateinit var currencyApi : CurrencyApi
-	private var isShowToast = false
 	private val apiKey = "29a87a3d627ec05c965a"
-	private val currencies = arrayOf("EUR", "USD", "RUB", "GBP", "ALL", "XCD", "BBS", "BTN", "BND", "XAF", "CUP")
+	private val currencies = arrayOf("EUR", "USD", "RUB", "GBP", "ALL", "XCD", "BBD", "BTN", "BND", "XAF", "CUP")
 	var currencyRate : Double? = null
 	var onChange = true
 
@@ -38,9 +43,18 @@ class MainActivity : AppCompatActivity() {
 		return spinnerAdapter
 	}
 
-	private fun currencyRateIsExpire(currency : CurrencyEntity) : Boolean {
+	private fun millisToDate(input: Long) : String {
+		val formatter = SimpleDateFormat("HH:mm dd-MM-yyyy", Locale.getDefault())
+		return formatter.format(Date(input))
+	}
+
+	private fun needUpdateCurrencies() : Boolean {
+		val fromDb: DateEntity? = db.make().getDate()
+		if (fromDb == null) {
+			return true
+		}
 		val currentTime = Calendar.getInstance().timeInMillis
-		val check = currentTime - currency.date
+		val check = currentTime - fromDb.date
 
 		Log.d("bestTAG", "checking currency rate:")
 		if (check >= 3600000) {
@@ -85,25 +99,28 @@ class MainActivity : AppCompatActivity() {
 		return true
 	}
 
+	private fun prepareQueries(values: Array<String>, currencyPerRuquest: Int) : MutableList<String> {
+		val resList = mutableListOf<String>()
+		val tmpList = mutableListOf<String>()
+		var count = 0
 
-	private fun getCurrencyRateFromApi(query: String) {
-		CoroutineScope(Dispatchers.IO).async {
-			Log.d("bestTAG", "get currency from api, query: $query")
-			val response = currencyApi.getCurrencies(query, "ultra", apiKey)
-			if (response.isSuccessful) {
-				Log.d("bestTAG", "response successful!")
-				currencyRate = response.body()?.getValue(query)?.toDouble() ?: 0.0
-				db.make().insertCurrency(
-					CurrencyEntity(query, currencyRate!!, Calendar.getInstance().timeInMillis))
+		for (current in values) {
+			for (addable in values) {
+				if (current != addable) {
+					tmpList.add(current + "_" + addable)
+					count++
+				}
+				if (count == currencyPerRuquest) {
+					resList.add(tmpList.joinToString(","))
+					tmpList.removeAll(tmpList)
+					count = 0
+				}
 			}
-			else {
-				Log.d("bestTAG", "response failed!")
-				Toast.makeText(this@MainActivity,
-					"ERROR ${response.code()}",
-					Toast.LENGTH_SHORT).show()
-			}
-			Log.d("bestTAG", "new value from api: $currencyRate")
 		}
+		if (tmpList.size > 0) {
+			resList.add(tmpList.joinToString(","))
+		}
+		return resList
 	}
 
 	fun getCurrencyRate() {
@@ -120,58 +137,101 @@ class MainActivity : AppCompatActivity() {
 		val currency : CurrencyEntity? = db.make().getCurrency(query)
 		currencyRate = currency?.value
 		Log.d("bestTAG", "currency from db: $currencyRate, ${currency?.type}")
-		if (currency == null || currencyRateIsExpire(currency)) {
-			when {
-				cd.isConnectingToInternet(this) -> getCurrencyRateFromApi(query)
-				currency != null -> {
-					if (!isShowToast) {
-						Toast.makeText(this@MainActivity,
-							"No internet connection, get information from cache",
-							Toast.LENGTH_SHORT).show()
-						isShowToast = true
+	}
+
+	private fun updateFromApi() {
+		val queries = prepareQueries(currencies, 10)
+		val currentDate = Calendar.getInstance().timeInMillis
+
+		db.make().insertDate(DateEntity(1, currentDate))
+		CoroutineScope(Dispatchers.IO).async {
+			for (query in queries) {
+				val response = currencyApi.getCurrencies(query, "ultra", apiKey)
+				val data = response.body()
+				if (response.isSuccessful && data != null) {
+					Log.d("bestTAG", "response is successful!")
+					for (value in data) {
+						db.make().insertCurrency(CurrencyEntity(value.key, value.value))
+						Log.d("bestTAG", "${value.key} ${value.value}")
 					}
-					currencyRate = currency.value
 				}
-				else -> Toast.makeText(this@MainActivity,
-					"No internet connection! No cached information",
-					Toast.LENGTH_SHORT).show()
 			}
 		}
+	}
+
+	private fun updateFromXml() {
+		val parser = resources.getXml(R.xml.custom_currencies)
+		val dateParser = resources.getXml(R.xml.custom_date)
+		while (parser.eventType != XmlPullParser.END_DOCUMENT) {
+			if (parser.eventType == XmlPullParser.START_TAG
+				&& parser.name == "currency") {
+				db.make().insertCurrency(
+					CurrencyEntity(
+						parser.getAttributeValue(0),
+						parser.getAttributeValue(1).toDouble()))
+			}
+			parser.next()
+		}
+		while (dateParser.eventType != XmlPullParser.END_DOCUMENT) {
+			if (dateParser.eventType == XmlPullParser.START_TAG
+				&& dateParser.name == "date") {
+				val date = dateParser.getAttributeValue(0)
+				Log.d("bestTAG", date.substring(0, date.length - 1))
+				db.make().insertDate(DateEntity(1, date.substring(0, date.length - 1).toLong()))
+			}
+			dateParser.next()
+		}
+	}
+
+	private fun updateCurrencies() {
+		if (cd.isConnectingToInternet(this)) {
+			updateFromApi()
+		}
+		else if (db.make().getDate() == null) {
+			updateFromXml()
+		}
+		updateInfo.text = "Последнее обновление: " + millisToDate(db.make().getDate().date)
 	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		setContentView(R.layout.activity_main)
 
+		if (savedInstanceState != null) {
+			isAfterRotate = savedInstanceState.getInt(KEY_IS_AFTER_ROTATE)
+		}
+		Log.d("bestTAG", "after rotate? $isAfterRotate")
+
 		db = AppDatabase.invoke(this)
 		currencyApi = CurrencyApi.getApi()
 		cd = ConnectionDetector()
-
-		if (!cd.isConnectingToInternet(this)) {
-			Toast.makeText(this, "No internet connection!", Toast.LENGTH_SHORT).show()
-		}
 
 		spinnerFrom = findViewById(R.id.spinnerFrom)
 		spinnerTo = findViewById(R.id.spinnerTo)
 		inputFrom = findViewById(R.id.inputFrom)
 		inputTo = findViewById(R.id.inputTo)
+		updateInfo = findViewById(R.id.updateInfo)
 
 		spinnerFrom.adapter = initSpinner(currencies)
 		spinnerTo.adapter = initSpinner(currencies)
-
 		inputFrom.addTextChangedListener(InputFromListener(this))
-
 		inputTo.addTextChangedListener(InputToListener(this))
-
 		spinnerFrom.onItemSelectedListener = SpinnerListener(this)
-
 		spinnerTo.onItemSelectedListener = SpinnerListener(this)
+
+		if (needUpdateCurrencies()) {
+			updateCurrencies()
+		}
+	}
+
+	override fun onSaveInstanceState(outState: Bundle) {
+		outState.putInt(KEY_IS_AFTER_ROTATE, 4)
+		super.onSaveInstanceState(outState)
 	}
 
 	@InternalCoroutinesApi
 	override fun onDestroy() {
 		cancel()
-
 		super.onDestroy()
 	}
 }

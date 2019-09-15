@@ -7,6 +7,12 @@ import androidx.room.PrimaryKey
 data class CurrencyEntity(
 	@PrimaryKey
 	val type: String,
-	val value: Double,
+	val value: Double
+)
+
+@Entity
+data class DateEntity(
+	@PrimaryKey
+	val id: Int,
 	val date: Long
 )

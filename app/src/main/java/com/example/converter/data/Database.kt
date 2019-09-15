@@ -7,7 +7,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
-	entities = [CurrencyEntity::class],
+	entities = [CurrencyEntity::class, DateEntity::class],
 	version = 1,
 	exportSchema = false
 )

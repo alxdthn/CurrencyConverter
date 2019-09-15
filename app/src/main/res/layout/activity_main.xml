@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
 	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
 	android:orientation="vertical"
 	android:background="@color/colorDark" >
 
-	<LinearLayout style="@style/LayoutVertical"
-		android:id="@+id/spinnerAnchor" >
+	<LinearLayout style="@style/LayoutVertical">
 
 		<TextView
 			style="@style/Header"
@@ -43,4 +43,13 @@
 
 	</LinearLayout>
 
+	<TextView
+		android:id="@+id/updateInfo"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:paddingLeft="20dp"
+		android:text="Последнее обновление: "
+		android:textColor="@color/colorUpdateInfo"
+		android:textSize="15sp"
+		app:fontFamily="@font/roboto_condensed_light_italic" />
 </LinearLayout>

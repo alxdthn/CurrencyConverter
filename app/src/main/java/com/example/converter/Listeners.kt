@@ -13,6 +13,10 @@ class InputFromListener(private val context: MainActivity) : TextWatcher {
 	override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
 	override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+		if (context.isAfterRotate > 0) {
+			context.isAfterRotate--
+			return
+		}
 		if (context.validateInput(s, context.inputFrom)) {
 			if (context.onChange) {
 				context.getCurrencyRate()
@@ -44,6 +48,10 @@ class InputToListener(private val context: MainActivity) : TextWatcher {
 	override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
 	override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+		if (context.isAfterRotate > 0) {
+			context.isAfterRotate--
+			return
+		}
 		if (context.validateInput(s, context.inputTo)) {
 			if (context.onChange) {
 				context.getCurrencyRate()
@@ -74,6 +82,10 @@ class SpinnerListener(private val context: MainActivity) : AdapterView.OnItemSel
 	override fun onNothingSelected(parent: AdapterView<*>?) {}
 
 	override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+		if (context.isAfterRotate > 0) {
+			context.isAfterRotate--
+			return
+		}
 		if (context.inputFrom.text.isNotEmpty() && context.onChange) {
 			context.getCurrencyRate()
 			if (context.currencyRate != null) {
