@@ -3,57 +3,44 @@
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
-	android:orientation="vertical">
+	android:orientation="vertical"
+	android:background="@color/colorDark" >
 
-	<TextView
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:text="Конвертировать из">
-	</TextView>
+	<LinearLayout style="@style/LayoutVertical"
+		android:id="@+id/spinnerAnchor" >
 
-	<LinearLayout
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:orientation="horizontal">
-		<Spinner
-			android:id="@+id/spinnerFrom"
-			android:layout_width="0dp"
-			android:layout_weight="50"
-			android:layout_height="wrap_content">
-		</Spinner>
-		<EditText
-			android:id="@+id/inputValue"
-			android:layout_width="0dp"
-			android:layout_weight="50"
-			android:layout_height="wrap_content">
-		</EditText>
+		<TextView
+			style="@style/Header"
+			android:text="@string/ConvertFrom" />
+
+		<LinearLayout style="@style/LayoutHorizontal" >
+
+			<Spinner style="@style/Spinner"
+				android:id="@+id/spinnerFrom" />
+
+			<EditText style="@style/Input"
+				android:id="@+id/inputFrom" />
+
+		</LinearLayout>
+
 	</LinearLayout>
 
-	<TextView
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:text="Конвертировать в">
-	</TextView>
+	<LinearLayout style="@style/LayoutVertical" >
 
-	<Spinner
-		android:id="@+id/spinnerTo"
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content">
-	</Spinner>
+		<TextView
+			style="@style/Header"
+			android:text="@string/ConvertTo" />
 
-	<TextView
-		android:id="@+id/outputValue"
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content">
-	</TextView>
+		<LinearLayout style="@style/LayoutHorizontal" >
 
-	<Button
-		android:id="@+id/convert"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:layout_gravity="center_horizontal"
-		android:text="Конвертировать">
+			<Spinner style="@style/Spinner"
+				android:id="@+id/spinnerTo" />
 
-	</Button>
+			<EditText style="@style/Input"
+				android:id="@+id/inputTo" />
+
+		</LinearLayout>
+
+	</LinearLayout>
 
 </LinearLayout>

@@ -8,4 +8,60 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <style name="Spinner">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">30</item>
+        <item name="android:dropDownHorizontalOffset">100dp</item>
+    </style>
+
+    <style name="Input">
+        <item name="android:digits">0123456789,.</item>
+        <item name="android:maxLength">13</item>
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_weight">70</item>
+        <item name="android:textColor">@color/colorLight</item>
+        <item name="android:inputType">numberDecimal|numberSigned</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+    <style name="Header">
+        <item name="fontFamily">@font/roboto_condensed_light</item>
+        <item name="android:textSize">17sp</item>
+        <item name="android:layout_marginTop">10dp</item>
+        <item name="android:layout_marginLeft">10dp</item>
+        <item name="android:textColor">@color/colorLight</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+    <style name="LinearLayout">
+        <item name="android:layout_margin">10dp</item>
+        <item name="android:background">@color/colorPrimaryHalfDark</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+    <style name="LayoutHorizontal" parent="LinearLayout">
+        <item name="android:orientation">horizontal</item>
+    </style>
+
+    <style name="LayoutVertical" parent="LinearLayout">
+        <item name="android:orientation">vertical</item>
+    </style>
+
+    <style name="SpinnerItem" parent="android:Widget.TextView.SpinnerItem">
+        <item name="android:padding">10dp</item>
+        <item name="android:background">@color/colorPrimaryHalfDark</item>
+        <item name="android:textColor">@color/colorLight</item>
+        <item name="android:gravity">center_horizontal|center_vertical</item>
+    </style>
+
+    <style name="SpinnerDropDownItem" parent="android:TextAppearance.Widget.TextView.SpinnerItem">
+        <item name="android:background">@color/colorPrimaryHalfDark</item>
+        <item name="android:textColor">@color/colorLight</item>
+        <item name="android:dropDownAnchor">@id/spinnerAnchor</item>
+
+    </style>
+
 </resources>
